@@ -496,6 +496,56 @@ async function loadDeckFromIDB(auto = false){
     console.warn('loadDeckFromIDB error', err);
   }
 }
+function guessMime(name){
+  const ext = name.toLowerCase().split('.').pop();
+  return ext === 'png' ? 'image/png'
+       : (ext === 'jpg' || ext === 'jpeg') ? 'image/jpeg'
+       : ext === 'webp' ? 'image/webp'
+       : 'application/octet-stream';
+}
+
+// Wczytanie talii z ZIP (plik z inputa)
+async function loadZipDeck(file, {autoSave=true} = {}){
+  try{
+    if(!window.JSZip){ alert('Brak JSZip – sprawdź <script> w index.html.'); return; }
+    const zip = await JSZip.loadAsync(file);
+
+    const files = [];
+    const entries = Object.values(zip.files);
+
+    // iterujemy po plikach w zipie (pomijamy katalogi)
+    for (const entry of entries){
+      if(entry.dir) continue;
+      const base = entry.name.split('/').pop(); // nazwa bez ścieżki
+      const lower = base.toLowerCase();
+      if(!/\.(png|jpg|jpeg|webp|heic)$/.test(lower)) continue;
+
+      const blob = await entry.async('blob');
+      const f = new File([blob], lower, { type: blob.type || guessMime(lower) });
+      files.push(f);
+    }
+
+    if(!files.length){
+      alert('ZIP nie zawiera obrazków (.png/.jpg/.jpeg/.webp/.heic).');
+      return;
+    }
+
+    // używamy istniejącej logiki mapowania nazw -> kart
+    mapFilesToDeck(files);
+
+    // (opcjonalnie) auto-zapis do IndexedDB
+    if(autoSave && typeof saveDeckToIDB === 'function'){
+      await saveDeckToIDB();
+    }
+
+    // odśwież UI
+    if(state.drawn.length){ draw(); } else { renderEmptyBoard(); }
+
+  }catch(err){
+    console.warn('loadZipDeck error', err);
+    alert('Nie udało się wczytać ZIP. Upewnij się, że to poprawny plik.');
+  }
+}
 
 
 /* =============== Panel: Szczegóły talii =============== */
