@@ -272,7 +272,7 @@ spreadSelect.addEventListener('change', () => {
   state.drawn = [];
   renderEmptyBoard();
 });
-
+const SPREADS = {
   one:{ name:'1 karta – szybka wskazówka', positions:[{label:'Wskazówka'}] },
 
   three:{ name:'3 karty – Przeszłość / Teraźniejszość / Przyszłość',
