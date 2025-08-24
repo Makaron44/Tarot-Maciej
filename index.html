@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tarot – rozkłady w przeglądarce</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./styles.css" />
+  <script defer src="./app.js"></script>
+  <link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#0f1226">
+<link rel="apple-touch-icon" href="icons/icon-192.png"> <!-- iOS ikona (może być 180–192px) -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1><span class="logo"></span> Tarot – rozkłady w przeglądarce</h1>
+
+      <div class="controls" role="group" aria-label="Sterowanie rozkładem">
+        <label for="spread" class="sr-only">Typ rozkładu</label>
+        <select id="spread" aria-label="Typ rozkładu">
+          <option value="one">1 karta – szybka wskazówka</option>
+          <option value="three" selected>3 karty – Przeszłość / Teraźniejszość / Przyszłość</option>
+          <option value="celtic">Krzyż celtycki – 10 kart</option>
+        </select>
+
+        <span class="checkbox">
+          <input id="reversed" type="checkbox" checked />
+          <label for="reversed">Uwzględniaj odwrócone karty</label>
+        </span>
+
+        <button id="shuffle" class="accent">Tasuj talię</button>
+        <button id="draw" class="primary">Rozłóż karty</button>
+        <button id="reset" class="ghost">Wyczyść</button>
+
+        <!-- Wgrywanie własnej talii: folder (desktop/Android) -->
+        <label class="filebtn" id="btnDeckFolder">
+          <input id="deckFolder" type="file" webkitdirectory directory multiple hidden>
+          <span>Wczytaj folder talii</span>
+        </label>
+
+        <!-- Wgrywanie własnej talii: wiele plików (mobile/iOS) -->
+        <label class="filebtn" id="btnDeckFiles">
+          <input id="deckFiles" type="file" multiple accept=".png,.jpg,.jpeg,.webp,.heic,image/*" hidden>
+          <span>Wczytaj pliki (mobile)</span>
+        </label>
+
+        <button id="clearDeck" class="ghost">Wyczyść talię</button>
+        <button id="saveDeck" class="accent">Zapisz talię (offline)</button>
+        <button id="deleteSavedDeck" class="ghost">Usuń zapisaną talię</button>
+        <span id="deckStatus" class="muted" aria-live="polite"></span>
+        <button id="deckInfoBtn" class="ghost">Szczegóły talii</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <main>
+      <section aria-live="polite" aria-label="Plansza z kartami">
+        <div id="board"></div>
+      </section>
+
+      <aside>
+        <div class="reading-head">
+          <h2>Interpretacja</h2>
+          <div><button id="copy" class="accent">Kopiuj opis</button></div>
+        </div>
+        <div id="reading" class="reading-list" aria-live="polite"></div>
+      </aside>
+    </main>
+  </div>
+
+  <footer class="wrap">
+    Dla zabawy i refleksji. Tarot nie zastępuje porady prawnej, finansowej ani medycznej.
+  </footer>
+
+  <!-- Panel: Szczegóły talii -->
+  <div id="deckInfo" class="deckinfo" hidden>
+    <div class="panel" role="dialog" aria-label="Szczegóły talii">
+      <div class="head">
+        <h3>Szczegóły talii</h3>
+        <button id="deckInfoClose" class="ghost">Zamknij ✕</button>
+      </div>
+
+      <div id="deckInfoSummary" class="summary"></div>
+
+      <div class="filters">
+        <label><input type="radio" name="deckFilter" value="all" checked> Wszystkie</label>
+        <label><input type="radio" name="deckFilter" value="custom"> Tylko własne</label>
+        <label><input type="radio" name="deckFilter" value="default"> Tylko domyślne</label>
+      </div>
+
+      <div id="deckInfoList" class="list"></div>
+    </div>
+  </div>
+</body>
+</html>
