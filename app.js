@@ -249,12 +249,45 @@ const DECK = [
 
 const SPREADS = {
   one:{ name:'1 karta – szybka wskazówka', positions:[{label:'Wskazówka'}] },
-  three:{ name:'3 karty – Przeszłość / Teraźniejszość / Przyszłość', positions:[{label:'Przeszłość'},{label:'Teraźniejszość'},{label:'Przyszłość'}] },
-  celtic:{ name:'Krzyż celtycki – 10 kart', positions:[
-    {label:'Sytuacja'},{label:'Wyzwanie'},{label:'Świadomość'},{label:'Podświadomość'},{label:'Przeszłość'},
-    {label:'Przyszłość'},{label:'Ty sam/a'},{label:'Otoczenie'},{label:'Nadzieje/Obawy'},{label:'Rezultat'}
-  ] }
+
+  three:{ name:'3 karty – Przeszłość / Teraźniejszość / Przyszłość',
+    positions:[{label:'Przeszłość'},{label:'Teraźniejszość'},{label:'Przyszłość'}]
+  },
+
+  celtic:{ name:'Krzyż celtycki – 10 kart',
+    positions:[
+      {label:'Sytuacja'},{label:'Wyzwanie'},{label:'Świadomość'},{label:'Podświadomość'},{label:'Przeszłość'},
+      {label:'Przyszłość'},{label:'Ty sam/a'},{label:'Otoczenie'},{label:'Nadzieje/Obawy'},{label:'Rezultat'}
+    ]
+  },
+
+  gwiazda5:{ name:'Gwiazda – 5 kart',
+    positions:[
+      {label:'Sytuacja'},{label:'Wyzwanie'},{label:'Rada'},{label:'Co sprzyja'},{label:'Wynik'}
+    ]
+  },
+
+  podkowa7:{ name:'Podkowa – 7 kart',
+    positions:[
+      {label:'Przeszłość'},{label:'Teraźniejszość'},{label:'Przeszkoda'},{label:'Wsparcie'},
+      {label:'Rada'},{label:'Nadzieje/Obawy'},{label:'Wynik'}
+    ]
+  },
+
+  zwiazek6:{ name:'Związek – 6 kart',
+    positions:[
+      {label:'Ty'},{label:'Partner'},{label:'Twoje potrzeby'},{label:'Jego/jej potrzeby'},{label:'Co was łączy'},{label:'Potencjał/Wynik'}
+    ]
+  },
+
+  decyzja6:{ name:'Decyzja – 6 kart (2×3 + wynik)',
+    positions:[
+      {label:'Opcja A – plusy'},{label:'Opcja A – minusy'},{label:'Opcja A – wynik'},
+      {label:'Opcja B – plusy'},{label:'Opcja B – minusy'},{label:'Opcja B – wynik'}
+    ]
+  }
 };
+
 
 const state = { deck:[], includeReversed:true, spreadKey:'three', drawn:[] };
 
