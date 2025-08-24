@@ -41,9 +41,8 @@ const deckInfoList    = $('#deckInfoList');
 const IMAGE_FOLDER = 'images';
 const ASSET_VERSION = '1'; // podbij gdy podmienisz statyczne obrazki
 
-// mapa: karta -> objectURL z wgranych plików
-// oryginalne pliki (File) – potrzebne do zapisu w IndexedDB
-const customDeck = new Map(); // 'major-0'..'major-21', 'minor-Buławy-A' itd.
+// mapa: karta -> objectURL z wgranych plików + File do IDB
+const customDeck  = new Map(); // 'major-0'..'major-21', 'minor-Buławy-A' itd.
 const customFiles = new Map(); // key -> File
 const keyForCard = (c) => c.arcana==='Major' ? `major-${c.id}` : `minor-${c.suit}-${c.rank}`;
 
@@ -80,7 +79,7 @@ const MAJOR_NAMES = [
   [8,'sila','strength'],[9,'pustelnik','hermit'],[10,'kolofortuny','wheel-of-fortune'],[11,'sprawiedliwosc','justice'],
   [12,'wisielec','hanged-man'],[13,'smierc','death'],[14,'umiarkowanie','temperance'],[15,'diabel','devil'],
   [16,'wieza','tower'],[17,'gwiazda','star'],[18,'ksiezyc','moon'],[19,'slonce','sun'],
-[20,'sadostateczny','judgement'],[21,'swiat','world']
+  [20,'sadostateczny','judgement'],[21,'swiat','world']
 ];
 const majorNameToId = new Map(); for(const [id,pl,en] of MAJOR_NAMES){ majorNameToId.set(pl,id); majorNameToId.set(en,id); }
 
@@ -113,20 +112,23 @@ function mapFilesToDeck(fileList){
     for(const t of parts){ if(suitSyn.has(t)) suit = suitSyn.get(t); if(rankSyn.has(t)) rank = rankSyn.get(t); }
     if(suit && rank){
       const k = `minor-${suit}-${rank}`;
-      if(!customDeck.has(k)){ customDeck.set(k, url);customFiles.set(k, f); continue; }
+      if(!customDeck.has(k)){ customDeck.set(k, url); customFiles.set(k, f); continue; }
     }
 
     // Major: numer arab., rzymski, nazwa
     let id = null;
     const mNum = stem.match(/\b([0-1]?\d|2[0-1])\b/); if(mNum){ id = parseInt(mNum[1],10); }
     if(id===null){ const mRom = stem.match(/\b(m|cm|d|cd|c|xc|l|xl|x|ix|v|iv|i)+\b/); if(mRom){ const val = romanToInt(mRom[0]); if(val>=0 && val<=21) id=val; } }
-    if(id===null){ const norm = s => s.replace(/[-_\s]/g, '');
-  const ns = norm(stem);
-  for (const [name, idTry] of majorNameToId.entries()) {
-    if (ns.includes(norm(name))) { id = idTry; break; } } }
+    if(id===null){
+      const norm = s => s.replace(/[-_\s]/g, '');
+      const ns = norm(stem);
+      for (const [name, idTry] of majorNameToId.entries()) {
+        if (ns.includes(norm(name))) { id = idTry; break; }
+      }
+    }
     if(id!==null && id>=0 && id<=21){
       const k = `major-${id}`;
-      if(!customDeck.has(k)){ customDeck.set(k, url);customFiles.set(k, f); continue; }
+      if(!customDeck.has(k)){ customDeck.set(k, url); customFiles.set(k, f); continue; }
     }
 
     // nie dopasowano – zwolnij
@@ -217,15 +219,6 @@ const MAJOR_TEXT = {
   21:{u:'Integracja i domknięcie cyklu. Celebruj pełnię.', r:'Rozproszenie i brak domknięć. Dokończ to, co otwarte.'},
 };
 
-function buildMinorMeaning(suit, rank, i){
-  const r = RANK_THEMES[rank], s = SUIT_THEMES[suit];
-  const up  = TUP[i % TUP.length]({r:r.pos, s:s.pos});
-  const rev = TREV[i % TREV.length]({r:r.neg, s:s.neg});
-  const act = ACTIONS[i % ACTIONS.length];
-  const q   = QUESTIONS[(i+1) % QUESTIONS.length];
-  return { u:`${up} ➤ Działanie: ${act} ➤ Pytanie: ${q}.`, r:`${rev} ➤ Działanie: ${act} ➤ Pytanie: ${q}.` };
-}
-
 /* =============== talia, rozkłady, stan =============== */
 const SUITS = ['Buławy','Kielichy','Miecze','Denary'];
 const RANKS = ['A','2','3','4','5','6','7','8','9','10','Paź','Rycerz','Królowa','Król'];
@@ -249,70 +242,50 @@ const DECK = [
 
 const SPREADS = {
   one:{ name:'1 karta – szybka wskazówka', positions:[{label:'Wskazówka'}] },
-
   three:{ name:'3 karty – Przeszłość / Teraźniejszość / Przyszłość',
-    positions:[{label:'Przeszłość'},{label:'Teraźniejszość'},{label:'Przyszłość'}]
-  },
-
+    positions:[{label:'Przeszłość'},{label:'Teraźniejszość'},{label:'Przyszłość'}] },
   celtic:{ name:'Krzyż celtycki – 10 kart',
     positions:[
       {label:'Sytuacja'},{label:'Wyzwanie'},{label:'Świadomość'},{label:'Podświadomość'},{label:'Przeszłość'},
-      {label:'Przyszłość'},{label:'Ty sam/a'},{label:'Otoczenie'},{label:'Nadzieje/Obawy'},{label:'Rezultat'}
-    ]
-  },
-
+      {label:'Przyszłość'},{label:'Ty sam/a'},{label:'Otoczenie'},{label:'Nadzieje/Obawy'},{label:'Rezultat'}] },
   gwiazda5:{ name:'Gwiazda – 5 kart',
-    positions:[
-      {label:'Sytuacja'},{label:'Wyzwanie'},{label:'Rada'},{label:'Co sprzyja'},{label:'Wynik'}
-    ]
-  },
-
+    positions:[{label:'Sytuacja'},{label:'Wyzwanie'},{label:'Rada'},{label:'Co sprzyja'},{label:'Wynik'}] },
   podkowa7:{ name:'Podkowa – 7 kart',
-    positions:[
-      {label:'Przeszłość'},{label:'Teraźniejszość'},{label:'Przeszkoda'},{label:'Wsparcie'},
-      {label:'Rada'},{label:'Nadzieje/Obawy'},{label:'Wynik'}
-    ]
-  },
-
+    positions:[{label:'Przeszłość'},{label:'Teraźniejszość'},{label:'Przeszkoda'},{label:'Wsparcie'},
+      {label:'Rada'},{label:'Nadzieje/Obawy'},{label:'Wynik'}] },
   zwiazek6:{ name:'Związek – 6 kart',
-    positions:[
-      {label:'Ty'},{label:'Partner'},{label:'Twoje potrzeby'},{label:'Jego/jej potrzeby'},{label:'Co was łączy'},{label:'Potencjał/Wynik'}
-    ]
-  },
-
+    positions:[{label:'Ty'},{label:'Partner'},{label:'Twoje potrzeby'},{label:'Jego/jej potrzeby'},{label:'Co was łączy'},{label:'Potencjał/Wynik'}] },
   decyzja6:{ name:'Decyzja – 6 kart (2×3 + wynik)',
     positions:[
       {label:'Opcja A – plusy'},{label:'Opcja A – minusy'},{label:'Opcja A – wynik'},
-      {label:'Opcja B – plusy'},{label:'Opcja B – minusy'},{label:'Opcja B – wynik'}
-    ]
-  }
+      {label:'Opcja B – plusy'},{label:'Opcja B – minusy'},{label:'Opcja B – wynik'}] }
 };
-/* 2) Generator opcji w <select> (poza SPREADS!) */
+
+// stan aplikacji (musi być PRZED buildSpreadOptions)
+const state = { deck:[], includeReversed:true, spreadKey:'three', drawn:[] };
+
+/* === Automatyczne budowanie listy rozkładów === */
 function buildSpreadOptions(){
-  const sel = document.getElementById('spread');
+  const sel = elSpread || document.getElementById('spread');
   if(!sel) return;
   sel.innerHTML = '';
   for (const [id, s] of Object.entries(SPREADS)) {
     const opt = document.createElement('option');
-    opt.value = id;           // klucz: one/three/celtic/...
-    opt.textContent = s.name; // etykieta widoczna
+    opt.value = id;
+    opt.textContent = s.name;
     sel.appendChild(opt);
   }
-  // ustaw domyślny/ostatni wybór
   if (!state.spreadKey || !SPREADS[state.spreadKey]) state.spreadKey = 'three';
   sel.value = state.spreadKey;
 }
-
-// wywołaj raz po starcie (po zdefiniowaniu state!)
 buildSpreadOptions();
-
-const state = { deck:[], includeReversed:true, spreadKey:'three', drawn:[] };
 
 /* =============== renderowanie =============== */
 function newDeck(){ state.deck = DECK.map(c=>({...c})); shuffle(state.deck); }
 
 function renderEmptyBoard(){
   const spread = SPREADS[state.spreadKey];
+  if(!spread){ elBoard.innerHTML=''; return; }
   elBoard.innerHTML = '';
   spread.positions.forEach((pos,i)=>{
     const c = document.createElement('div');
@@ -353,7 +326,6 @@ function renderCard(item){
     ${reversed?'<span class="rev">odwr.</span>':''}
   `;
 
-  // fallback, gdy obrazka brak
   const img = front.querySelector('img');
   img.addEventListener('error', ()=>{
     console.warn('Brak obrazka:', img.src);
@@ -445,52 +417,35 @@ function onScrollDir(){
   if (dy > 5 && beyondHeader && !headerHidden){ document.body.classList.add('scrolldown'); headerHidden = true; }
   else if (dy < -5 && headerHidden){ document.body.classList.remove('scrolldown'); headerHidden = false; }
 }
-// --- IndexedDB helpers ---
+
+/* =============== IndexedDB =============== */
 function openTarotDB(){
   return new Promise((resolve, reject)=>{
     const req = indexedDB.open('tarot', 1);
     req.onupgradeneeded = () => {
       const db = req.result;
-      if(!db.objectStoreNames.contains('deckFiles')){
-        db.createObjectStore('deckFiles', { keyPath: 'key' }); // {key, name, blob}
-      }
-      if(!db.objectStoreNames.contains('meta')){
-        db.createObjectStore('meta', { keyPath: 'k' });       // {k:'hasSavedDeck', v:true/false}
-      }
+      if(!db.objectStoreNames.contains('deckFiles')) db.createObjectStore('deckFiles', { keyPath: 'key' });
+      if(!db.objectStoreNames.contains('meta'))      db.createObjectStore('meta', { keyPath: 'k'   });
     };
     req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+    req.onerror   = () => reject(req.error);
   });
 }
+function idb(req){ return new Promise((res,rej)=>{ req.onsuccess=()=>res(req.result); req.onerror=()=>rej(req.error); }); }
 
-// zamiana requestu IDB -> Promise
-function idb(req){
-  return new Promise((resolve, reject)=>{
-    req.onsuccess = ()=> resolve(req.result);
-    req.onerror   = ()=> reject(req.error);
-  });
-}
 async function saveDeckToIDB(){
   try{
-    if(!customFiles.size){
-      alert('Najpierw wczytaj własną talię (folder/pliki).');
-      return;
-    }
+    if(!customFiles.size){ alert('Najpierw wczytaj własną talię (folder/pliki).'); return; }
     const db = await openTarotDB();
     const tx = db.transaction(['deckFiles','meta'], 'readwrite');
     const filesStore = tx.objectStore('deckFiles');
-
-    // wyczyść poprzedni zapis
     await idb(filesStore.clear());
-
     let count = 0;
     for(const [key, file] of customFiles.entries()){
-      await idb(filesStore.put({ key, name: file.name, blob: file }));
-      count++;
+      await idb(filesStore.put({ key, name: file.name, blob: file })); count++;
     }
     await idb(tx.objectStore('meta').put({ k:'hasSavedDeck', v:true }));
     await new Promise(res=> tx.oncomplete = res);
-
     if(deckStatus) deckStatus.textContent = `Zapisano w przeglądarce: ${count} plików.`;
     alert('Talia zapisana offline. Przy następnym uruchomieniu załaduje się automatycznie.');
   }catch(e){
@@ -498,54 +453,53 @@ async function saveDeckToIDB(){
     alert('Nie udało się zapisać talii (quota/zezwolenia).');
   }
 }
-// (e) Wczytaj zapisaną talię z IndexedDB
 async function loadDeckFromIDB(auto = false){
   try{
     const db = await openTarotDB();
-
-    // jeśli auto, sprawdź flagę czy w ogóle coś było zapisane
     if (auto){
       const metaStore = db.transaction('meta').objectStore('meta');
       const flag = await idb(metaStore.get('hasSavedDeck'));
-      if (!flag || !flag.v) return; // brak zapisu – wyjdź cicho
+      if (!flag || !flag.v) return;
     }
-
     const filesStore = db.transaction('deckFiles').objectStore('deckFiles');
-    const rows = await idb(filesStore.getAll()); // [{key, name, blob}, ...]
+    const rows = await idb(filesStore.getAll()); // [{key,name,blob},...]
 
-    // wyczyść aktualną talię i URLe
-    for (const url of customDeck.values()){
-      try { URL.revokeObjectURL(url); } catch {}
-    }
-    customDeck.clear();
-    customFiles.clear();
+    for (const url of customDeck.values()) try { URL.revokeObjectURL(url); } catch {}
+    customDeck.clear(); customFiles.clear();
 
-    // odtwórz mapy z zapisanych blobów
     let majors = 0, minors = 0;
     for (const row of (rows || [])){
       const blob = row.blob;
-      const url  = URL.createObjectURL(blob);        // do renderu
+      const url  = URL.createObjectURL(blob);
       customDeck.set(row.key, url);
-      // z blobu tworzymy File, aby można było ponownie zapisać talię
       customFiles.set(row.key, new File([blob], row.name, { type: blob.type || 'image/*' }));
       if (row.key.startsWith('major-')) majors++; else if (row.key.startsWith('minor-')) minors++;
     }
-
-    // status w belce
     if (deckStatus){
       const defMaj = 22 - majors, defMin = 56 - minors;
       deckStatus.textContent = rows?.length
         ? `Talia (IDB): ${majors}/22 Major, ${minors}/56 Minor · Domyślne: ${defMaj+defMin}`
         : 'Brak zapisanej talii.';
     }
-
-    // odśwież UI
     if (state.drawn.length){ draw(); } else { renderEmptyBoard(); }
-
-  }catch(err){
-    console.warn('loadDeckFromIDB error', err);
+  }catch(err){ console.warn('loadDeckFromIDB error', err); }
+}
+async function deleteSavedDeck(){
+  try{
+    const db = await openTarotDB();
+    const tx = db.transaction(['deckFiles','meta'], 'readwrite');
+    await idb(tx.objectStore('deckFiles').clear());
+    await idb(tx.objectStore('meta').put({ k:'hasSavedDeck', v:false }));
+    await new Promise(res=> tx.oncomplete = res);
+    if(deckStatus) deckStatus.textContent = 'Usunięto zapisaną talię.';
+    alert('Zapisana talia została usunięta.');
+  }catch(e){
+    console.warn('deleteSavedDeck error', e);
+    alert('Nie udało się usunąć zapisanej talii.');
   }
 }
+
+/* =============== ZIP import =============== */
 function guessMime(name){
   const ext = name.toLowerCase().split('.').pop();
   return ext === 'png' ? 'image/png'
@@ -553,50 +507,26 @@ function guessMime(name){
        : ext === 'webp' ? 'image/webp'
        : 'application/octet-stream';
 }
-
-// Wczytanie talii z ZIP (plik z inputa)
 async function loadZipDeck(file, {autoSave=true} = {}){
   try{
     if(!window.JSZip){ alert('Brak JSZip – sprawdź <script> w index.html.'); return; }
     const zip = await JSZip.loadAsync(file);
-
     const files = [];
-    const entries = Object.values(zip.files);
-
-    // iterujemy po plikach w zipie (pomijamy katalogi)
-    for (const entry of entries){
+    for (const entry of Object.values(zip.files)){
       if(entry.dir) continue;
-      const base = entry.name.split('/').pop(); // nazwa bez ścieżki
+      const base = entry.name.split('/').pop();
       const lower = base.toLowerCase();
-      if(!/\.(png|jpg|jpeg|webp|heic)$/.test(lower)) continue;
-
+      if(!/\.((png|jpg|jpeg|webp|heic))$/.test(lower)) continue;
       const blob = await entry.async('blob');
       const f = new File([blob], lower, { type: blob.type || guessMime(lower) });
       files.push(f);
     }
-
-    if(!files.length){
-      alert('ZIP nie zawiera obrazków (.png/.jpg/.jpeg/.webp/.heic).');
-      return;
-    }
-
-    // używamy istniejącej logiki mapowania nazw -> kart
+    if(!files.length){ alert('ZIP nie zawiera obrazków (.png/.jpg/.jpeg/.webp/.heic).'); return; }
     mapFilesToDeck(files);
-
-    // (opcjonalnie) auto-zapis do IndexedDB
-    if(autoSave && typeof saveDeckToIDB === 'function'){
-      await saveDeckToIDB();
-    }
-
-    // odśwież UI
+    if(autoSave) await saveDeckToIDB();
     if(state.drawn.length){ draw(); } else { renderEmptyBoard(); }
-
-  }catch(err){
-    console.warn('loadZipDeck error', err);
-    alert('Nie udało się wczytać ZIP. Upewnij się, że to poprawny plik.');
-  }
+  }catch(err){ console.warn('loadZipDeck error', err); alert('Nie udało się wczytać ZIP.'); }
 }
-
 
 /* =============== Panel: Szczegóły talii =============== */
 function computeDeckStats(){
@@ -606,10 +536,7 @@ function computeDeckStats(){
     if(isCustom){ c.arcana==='Major' ? customMajor++ : customMinor++; }
     return { name:c.name, arcana:c.arcana, suit:c.suit, isCustom };
   });
-  const usedNow = state.drawn.map(({card})=>{
-    const isCustom = customDeck.has(keyForCard(card));
-    return { name:card.name, isCustom };
-  });
+  const usedNow = state.drawn.map(({card})=>({ name:card.name, isCustom: customDeck.has(keyForCard(card)) }));
   return {
     customMajor, customMinor,
     defaultMajor: 22 - customMajor, defaultMinor: 56 - customMinor,
@@ -642,8 +569,11 @@ function renderDeckInfo(filter='all'){
 }
 
 /* =============== events =============== */
-if(elSpread)   elSpread.addEventListener('change', e=>{ state.spreadKey = e.target.value; renderEmptyBoard(); });
+// zmiana rozkładu
+if(elSpread)   elSpread.addEventListener('change', e=>{ state.spreadKey = e.target.value; state.drawn=[]; renderEmptyBoard(); });
+// odwrócone karty
 if(elReversed) elReversed.addEventListener('change', e=>{ state.includeReversed = e.target.checked; });
+// tasowanie / rozkład / reset / kopiuj
 if(btnShuffle) btnShuffle.addEventListener('click', ()=>{ newDeck(); });
 if(btnDraw)    btnDraw.addEventListener('click', ()=>{
   if(state.deck.length < SPREADS[state.spreadKey].positions.length) newDeck();
@@ -652,18 +582,17 @@ if(btnDraw)    btnDraw.addEventListener('click', ()=>{
 });
 if(btnReset)   btnReset.addEventListener('click', ()=>{ newDeck(); state.drawn=[]; renderEmptyBoard(); elReading.innerHTML=''; });
 if(btnCopy)    btnCopy.addEventListener('click', copyReading);
+
+// ZIP
 const btnLoadZip = document.getElementById('btnLoadZip');
 const zipInput   = document.getElementById('zipInput');
-
 btnLoadZip?.addEventListener('click', () => zipInput?.click());
-
 zipInput?.addEventListener('change', async (e) => {
   const file = e.target.files && e.target.files[0];
   if(!file) return;
-  await loadZipDeck(file, { autoSave: true }); // auto zapis po imporcie
-  zipInput.value = ''; // wyczyść input
+  await loadZipDeck(file, { autoSave: true });
+  zipInput.value = '';
 });
-
 
 // dopasowanie obrazka: F = cover/contain
 document.addEventListener('keydown', (e)=>{ if((e.key||'').toLowerCase()==='f'){ document.body.classList.toggle('fit-contain'); } });
@@ -688,18 +617,17 @@ function handleFiles(fileList){
 if(btnClearDeck){
   btnClearDeck.addEventListener('click', ()=>{
     for(const url of customDeck.values()) try{ URL.revokeObjectURL(url); }catch{}
-    customDeck.clear();
+    customDeck.clear(); customFiles.clear();
     if(deckStatus) deckStatus.textContent = 'Talia własna wyłączona (domyślne obrazki aktywne).';
     if(state.drawn.length){ draw(); } else { renderEmptyBoard(); }
   });
 }
-// zapisz/usuń zapisaną talię (IndexedDB)
+
+// zapisz/usuń zapisaną talię
 const btnSaveDeck        = document.getElementById('saveDeck');
 const btnDeleteSavedDeck = document.getElementById('deleteSavedDeck');
-
 btnSaveDeck?.addEventListener('click', saveDeckToIDB);
 btnDeleteSavedDeck?.addEventListener('click', deleteSavedDeck);
-
 
 // Panel talii
 if(deckInfoBtn)   deckInfoBtn.addEventListener('click', ()=> renderDeckInfo('all'));
@@ -717,6 +645,7 @@ window.addEventListener('scroll', ()=>{
   }
 }, { passive:true });
 
+// SW
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js', { scope: './' })
@@ -724,9 +653,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-
 /* =============== start =============== */
 newDeck();
 renderEmptyBoard();
 loadDeckFromIDB(true);
-
