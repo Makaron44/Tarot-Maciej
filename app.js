@@ -504,25 +504,48 @@ function guessMime(name){
        : ext === 'webp' ? 'image/webp'
        : 'application/octet-stream';
 }
+
+// Wczytanie talii z ZIP (plik z inputa)
 async function loadZipDeck(file, {autoSave=true} = {}){
   try{
     if(!window.JSZip){ alert('Brak JSZip – sprawdź <script> w index.html.'); return; }
     const zip = await JSZip.loadAsync(file);
+
     const files = [];
-    for (const entry of Object.values(zip.files)){
+    const entries = Object.values(zip.files);
+
+    // iterujemy po plikach w zipie (pomijamy katalogi)
+    for (const entry of entries){
       if(entry.dir) continue;
-      const base = entry.name.split('/').pop();
+      const base = entry.name.split('/').pop(); // nazwa bez ścieżki
       const lower = base.toLowerCase();
-      if(!/\.((png|jpg|jpeg|webp|heic))$/.test(lower)) continue;
+      if(!/\.(png|jpg|jpeg|webp|heic)$/.test(lower)) continue;
+
       const blob = await entry.async('blob');
       const f = new File([blob], lower, { type: blob.type || guessMime(lower) });
       files.push(f);
     }
-    if(!files.length){ alert('ZIP nie zawiera obrazków (.png/.jpg/.jpeg/.webp/.heic).'); return; }
+
+    if(!files.length){
+      alert('ZIP nie zawiera obrazków (.png/.jpg/.jpeg/.webp/.heic).');
+      return;
+    }
+
+    // używamy istniejącej logiki mapowania nazw -> kart
     mapFilesToDeck(files);
-    if(autoSave) await saveDeckToIDB();
+
+    // (opcjonalnie) auto-zapis do IndexedDB
+    if(autoSave && typeof saveDeckToIDB === 'function'){
+      await saveDeckToIDB();
+    }
+
+    // odśwież UI
     if(state.drawn.length){ draw(); } else { renderEmptyBoard(); }
-  }catch(err){ console.warn('loadZipDeck error', err); alert('Nie udało się wczytać ZIP.'); }
+
+  }catch(err){
+    console.warn('loadZipDeck error', err);
+    alert('Nie udało się wczytać ZIP. Upewnij się, że to poprawny plik.');
+  }
 }
 
 
@@ -639,6 +662,17 @@ if ('serviceWorker' in navigator) {
       .catch(err => console.warn('SW register failed', err));
   });
 }
+const btnLoadZip = document.getElementById('btnLoadZip');
+const zipInput   = document.getElementById('zipInput');
+
+btnLoadZip?.addEventListener('click', () => zipInput?.click());
+
+zipInput?.addEventListener('change', async (e) => {
+  const file = e.target.files && e.target.files[0];
+  if(!file) return;
+  await loadZipDeck(file, { autoSave: true }); // auto zapis po imporcie
+  zipInput.value = ''; // wyczyść input
+});
 
 
 /* =============== start =============== */
