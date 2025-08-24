@@ -1,5 +1,5 @@
 // Prosty SW: pre-cache core, runtime cache dla assetów i obrazów
-const VERSION = 'v1.0.0';
+const VERSION = 'v1.0.3';
 const CORE = `tarot-core-${VERSION}`;
 const RUNTIME = `tarot-rt-${VERSION}`;
 
@@ -10,6 +10,7 @@ const CORE_ASSETS = [
   './app.js',
   './manifest.webmanifest',
   './offline.html'
+  './vendor/jszip.min.js'
 ];
 
 // instalacja – cache core
@@ -83,3 +84,4 @@ self.addEventListener('fetch', (e) => {
   // reszta – try cache, then network
   e.respondWith(caches.match(req).then(c => c || fetch(req)));
 });
+
