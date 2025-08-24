@@ -294,25 +294,17 @@ function buildSpreadOptions(){
   sel.innerHTML = '';
   for (const [id, s] of Object.entries(SPREADS)) {
     const opt = document.createElement('option');
-    opt.value = id;          // klucz z SPREADS (one/three/celtic/…)
-    opt.textContent = s.name;
+    opt.value = id;           // klucz: one/three/celtic/...
+    opt.textContent = s.name; // etykieta widoczna
     sel.appendChild(opt);
   }
-  // ustaw domyślny wybór
-  state.spread = state.spread && SPREADS[state.spread] ? state.spread : 'three';
-  sel.value = state.spread;
+  // ustaw domyślny/ostatni wybór
+  if (!state.spreadKey || !SPREADS[state.spreadKey]) state.spreadKey = 'three';
+  sel.value = state.spreadKey;
 }
 
-/* 3) Wywołanie + listener */
+// wywołaj raz po starcie (po zdefiniowaniu state!)
 buildSpreadOptions();
-
-const spreadSelect = document.getElementById('spread');
-spreadSelect.addEventListener('change', () => {
-  state.spread = spreadSelect.value;
-  state.drawn = [];
-  renderEmptyBoard();
-});
-
 
 const state = { deck:[], includeReversed:true, spreadKey:'three', drawn:[] };
 
@@ -734,6 +726,7 @@ if ('serviceWorker' in navigator) {
 
 
 /* =============== start =============== */
-newDeck(); renderEmptyBoard();
-// spróbuj automatycznie wczytać zapisaną talię (jeśli istnieje)
+newDeck();
+renderEmptyBoard();
 loadDeckFromIDB(true);
+
