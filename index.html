@@ -47,6 +47,9 @@
           <input id="deckFiles" type="file" multiple accept=".png,.jpg,.jpeg,.webp,.heic,image/*" hidden>
           <span>Wczytaj pliki (mobile)</span>
         </label>
+         <!-- przyciski (w okolicy istniejących kontrolek) -->
+<button id="btnLoadZip">Wczytaj ZIP talii</button>
+<input id="zipInput" type="file" accept=".zip" hidden>
 
         <button id="clearDeck" class="ghost">Wyczyść talię</button>
         <button id="saveDeck" class="accent">Zapisz talię (offline)</button>
@@ -96,10 +99,6 @@
       <div id="deckInfoList" class="list"></div>
     </div>
   </div>
-  <!-- przyciski (w okolicy istniejących kontrolek) -->
-<button id="btnLoadZip">Wczytaj ZIP talii</button>
-<input id="zipInput" type="file" accept=".zip" hidden>
-
 <!-- JS: najpierw JSZip, potem Twoje app.js -->
 <script src="./vendor/jszip.min.js"></script>
 <script src="./app.js"></script>
