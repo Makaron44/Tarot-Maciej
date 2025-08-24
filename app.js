@@ -248,31 +248,6 @@ const DECK = [
 ];
 
 const SPREADS = {
-  function buildSpreadOptions(){
-  const sel = document.getElementById('spread');
-  if(!sel) return;
-  sel.innerHTML = '';
-  for (const [id, s] of Object.entries(SPREADS)) {
-    const opt = document.createElement('option');
-    opt.value = id;
-    opt.textContent = s.name;
-    sel.appendChild(opt);
-  }
-  // ustaw domyślny wybór
-  state.spread = state.spread && SPREADS[state.spread] ? state.spread : 'three';
-  sel.value = state.spread;
-}
-
-// wywołaj raz po starcie (przed podpięciem .change)
-buildSpreadOptions();
-
-const spreadSelect = document.getElementById('spread');
-spreadSelect.addEventListener('change', () => {
-  state.spread = spreadSelect.value;
-  state.drawn = [];
-  renderEmptyBoard();
-});
-const SPREADS = {
   one:{ name:'1 karta – szybka wskazówka', positions:[{label:'Wskazówka'}] },
 
   three:{ name:'3 karty – Przeszłość / Teraźniejszość / Przyszłość',
@@ -312,6 +287,31 @@ const SPREADS = {
     ]
   }
 };
+/* 2) Generator opcji w <select> (poza SPREADS!) */
+function buildSpreadOptions(){
+  const sel = document.getElementById('spread');
+  if(!sel) return;
+  sel.innerHTML = '';
+  for (const [id, s] of Object.entries(SPREADS)) {
+    const opt = document.createElement('option');
+    opt.value = id;          // klucz z SPREADS (one/three/celtic/…)
+    opt.textContent = s.name;
+    sel.appendChild(opt);
+  }
+  // ustaw domyślny wybór
+  state.spread = state.spread && SPREADS[state.spread] ? state.spread : 'three';
+  sel.value = state.spread;
+}
+
+/* 3) Wywołanie + listener */
+buildSpreadOptions();
+
+const spreadSelect = document.getElementById('spread');
+spreadSelect.addEventListener('change', () => {
+  state.spread = spreadSelect.value;
+  state.drawn = [];
+  renderEmptyBoard();
+});
 
 
 const state = { deck:[], includeReversed:true, spreadKey:'three', drawn:[] };
