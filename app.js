@@ -602,6 +602,18 @@ if(btnDraw)    btnDraw.addEventListener('click', ()=>{
 });
 if(btnReset)   btnReset.addEventListener('click', ()=>{ newDeck(); state.drawn=[]; renderEmptyBoard(); elReading.innerHTML=''; });
 if(btnCopy)    btnCopy.addEventListener('click', copyReading);
+const btnLoadZip = document.getElementById('btnLoadZip');
+const zipInput   = document.getElementById('zipInput');
+
+btnLoadZip?.addEventListener('click', () => zipInput?.click());
+
+zipInput?.addEventListener('change', async (e) => {
+  const file = e.target.files && e.target.files[0];
+  if(!file) return;
+  await loadZipDeck(file, { autoSave: true }); // auto zapis po imporcie
+  zipInput.value = ''; // wyczyść input
+});
+
 
 // dopasowanie obrazka: F = cover/contain
 document.addEventListener('keydown', (e)=>{ if((e.key||'').toLowerCase()==='f'){ document.body.classList.toggle('fit-contain'); } });
